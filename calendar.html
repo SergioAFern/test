@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html><head>
+
+<title>Sergio Fernandez, Computer Programmer</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="description" content="Sergio Fernandez's simple calendar"/>
+<meta id="viewport" name="viewport" content="minimal-ui,width=device-width,height=device-height,user-scalable=no,initial-scale=1,maximum-scale=1,user-scalable=0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+</head>
+<body bgcolor="#FFFFFF">
+<center>
+  <div id="calendar"></div>
+</center>
+<script>
+//**************************************************
+// Sample Calendar code by Sergio Fernandez 4/5/2017
+//**************************************************
+
+function getHolidays(year) {
+   if (year < 1000) year += 1900; // calendar year
+   var thisYear = now.getYear();
+   if (thisYear < 1000) thisYear += 1900; // calendar year
+
+   var http = new XMLHttpRequest();
+   if (year <thisYear) { key="6c177ee7-0095-4401-84f4-1db70c0be2eb";} 
+   else {key="c895356c-bcd0-441f-a7b5-58988c464088";};
+   http.open('GET','https://holidayapi.com/v1/holidays?key='+key+'&country=us&year='+year,false);
+   http.send();
+   return JSON.parse(http.responseText);
+};
+
+function HolidayDate(year,month,day) { // find out if there is a holiday on this given date
+ var ret = '';
+ var date = year+'-'+('0'+(month+1)).slice(-2)+'-'+('0'+day).slice(-2);
+ if (holidays["holidays"][date]) { // found holiday?
+   for (index=0;index<holidays["holidays"][date].length;index++) {// loop through all holidays I found.
+     ret+=holidays["holidays"][date][index]["name"]+'<BR>';
+   }
+ };
+ return ret;
+};
+
+function leapYear(year) {
+  if (year % 4 == 0) // basic rule
+    return true // is leap year
+  return false // is not leap year
+};
+
+function getDays(month, year) {
+  // create array to hold number of days in each month Januray..December
+  var ar =[31,(leapYear(year)) ? 29 : 28,31,30,31,30,31,31,30,31,30,31];
+
+  // return number of days in the specified month (parameter)
+  return ar[month]
+}
+
+var getMonthName= ["January","February","March","April","May","June","July",
+            "August","September","October","November","December"];
+
+function setCal(month,year) {
+  // standard time attributes
+  if (year < 1000) year += 1900
+ 
+  var monthName = getMonthName[month];
+  var date = now.getDate();
+
+  // create instance of first day of month, and extract the day on which it occurs
+  var firstDayInstance = new Date(year, month, 1)
+  var firstDay = firstDayInstance.getDay()
+  firstDayInstance = null
+
+  // number of days in current month
+  var days = getDays(month, year)
+
+  // call function to draw calendar
+  drawCal(firstDay + 1, days, date, monthName, year)
+}
+
+function drawCal(firstDay, lastDate, date, monthName, year) {
+  // constant table settings
+  var headerHeight = 50; // height of the table's header cell
+  var border = 2; // 3D height of table's border
+  var cellspacing = 4; // width of table's border
+  var headerColor = "midnightblue"; // color of table's header
+  var headerSize = "+3"; // size of tables header font
+  var colWidth = 60; // width of columns in table
+  var dayCellHeight = 25; // height of cells containing days of the week
+  var dayColor = "darkblue"; // color of font representing week days
+  var cellHeight = 40; // height of cells representing dates in the calendar
+  var todayColor = "red"; // color specifying today's date in the calendar
+  var timeColor = "purple"; // color of font representing current time
+
+  // create basic table structure
+  var text = "" // initialize accumulative variable to empty string
+  text += '<TABLE BORDER=' + border + ' CELLSPACING=' + cellspacing + '>'; // table settings
+
+  text += '<TH COLSPAN=2 HEIGHT=' + headerHeight + '>'; // create table header cell
+  text += '<FONT COLOR="' + headerColor + '" SIZE=' + headerSize + '>'; // set font for table header
+  text += '<a href="javascript:previous();">Previous</a>';
+  text += '</FONT>'; // close table header's font settings
+  text += '</TH>'; // close header cell
+
+
+  text += '<TH COLSPAN=3 HEIGHT=' + headerHeight + '>' // create table header cell
+  text += '<FONT COLOR="' + headerColor + '" SIZE=' + headerSize + '>' // set font for table header
+  text += monthName + ' ' + year
+  text += '</FONT>' // close table header's font settings
+  text += '</TH>' // close header cell
+
+  text += '<TH COLSPAN=2 HEIGHT=' + headerHeight + '>'; // create table header cell
+  text += '<FONT COLOR="' + headerColor + '" SIZE=' + headerSize + '>'; // set font for table header
+  text += '<a href="javascript:next();">Next</a>';
+  text += '</FONT>'; // close table header's font settings
+  text += '</TH>'; // close header cell
+
+  // variables to hold constant settings
+  var openCol = '<TD WIDTH=' + colWidth + ' HEIGHT=' + dayCellHeight + '>'
+  openCol += '<FONT COLOR="' + dayColor + '">'
+  var closeCol = '</FONT></TD>'
+
+  // create array of abbreviated day names
+  var weekDay = ["Sun","Mon","Tues","Wed","Thu","Fri","Sat"];
+
+  // create first row of table to set column width and specify week day
+  text += '<TR ALIGN="center" VALIGN="center">'
+  for (var dayNum = 0; dayNum < 7; ++dayNum) {
+    text += openCol + weekDay[dayNum] + closeCol
+  }
+  text += '</TR>'
+
+  // declaration and initialization of two variables to help with tables
+  var digit = 1;
+  var curCell = 1;
+
+  for (var row = 1; row <= Math.ceil((lastDate + firstDay - 1) / 7); ++row) {
+    text += '<TR ALIGN="right" VALIGN="top">';
+    for (var col = 1; col <= 7; ++col) {
+      if (digit > lastDate)
+        break
+      if (curCell < firstDay) {
+        text += '<TD></TD>';
+        curCell++;
+      } else {
+        text += '<TD HEIGHT=' + cellHeight + '>';
+        if (digit == date) { // current cell represent today's date
+          text += '<FONT COLOR="' + todayColor + '">';
+          text += digit;
+          text += '</FONT><BR>';
+        } else {
+          text += digit;
+        };
+
+        text += '<FONT COLOR="' + timeColor + '" SIZE=2>';
+        text += '<CENTER>' + HolidayDate(year,month,digit) + '</CENTER>';
+        text += '</FONT>';
+        text += '</TD>';
+        digit++;
+      }
+    }
+    text += '</TR>';
+  }
+
+  // close all basic table tags
+  text += '</TABLE>';
+
+  // print accumulative HTML string
+  document.getElementById("calendar").innerHTML=text;
+};
+
+function previous() { // show prevous month's calendar
+  month--;
+  if (month<0) {
+    year--;
+    month=11;
+    holidays = getHolidays(year); // get holidays for current year
+  };
+  setCal(month,year);
+};
+
+function next() { // show next months calendar
+  month++;
+  if (month>11) {
+    year++;
+    month=0;
+    holidays = getHolidays(year); // get holidays for current year
+  };
+  setCal(month,year);
+};
+
+
+  // get current month & year
+  var now = new Date();
+  var month = now.getMonth();
+  var year=now.getYear();
+  
+  var holidays = getHolidays(year); // get holidays for current year
+
+
+  setCal(month,year); // Display Calendar with todays month & year
+</script>
+</body>
+</html>
